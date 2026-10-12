@@ -22,6 +22,10 @@ EDITOR_SELECTOR = '.postArticle-content[contenteditable="true"]'
 IMAGE_RE = re.compile(r"!\[[^\]]*\]\((\/[^)\s]+\.(?:png|jpe?g|gif))\)", re.IGNORECASE)
 
 LOGIN_SELECTORS = [
+    '[data-testid="headerUserIcon"]',
+    '[data-testid="headerNotificationButton"]',
+    '[data-testid="headerWriteButton"]',
+    # legacy selectors (kept for back-compat)
     '[data-testid="headerUserButton"]',
     '[data-testid="write-button"]',
     'a[href="/me/stories"]',
