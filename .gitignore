@@ -1,0 +1,15 @@
+.venv/
+.env
+node_modules/
+dist/
+__pycache__/
+*.built.md
+.DS_Store
+medium-session.json
+CUSTOM.md
+.mcp.json
+# Personal blog content is never pushed (public template, private content).
+posts/
+STATE.md
+roadmaps/*
+!roadmaps/example-series.md
