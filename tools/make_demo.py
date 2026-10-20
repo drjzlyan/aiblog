@@ -115,7 +115,7 @@ def build_frames(tmp: Path) -> list[Path]:
     img, d = base_frame("edits go local-first, then land on the same draft URL — no duplicates",
                         "5 · update")
     term_card(img, d, [
-        "$ uv run python tools/medium_edit.py <draft-id> posts/NN-slug",
+        "$ uv run python tools/medium_edit.py posts/NN-slug",
         "  → same /p/<draft-id>/edit URL, rewritten in place",
     ])
     save(img, "f06.png")

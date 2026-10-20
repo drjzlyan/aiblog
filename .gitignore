@@ -13,3 +13,6 @@ posts/
 STATE.md
 roadmaps/*
 !roadmaps/example-series.md
+
+# Local tool state (scratch draft id, dialog screenshots)
+.aiblog/

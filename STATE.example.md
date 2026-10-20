@@ -15,7 +15,9 @@ Last updated: YYYY-MM-DD
 
 - Medium scripts need a headed browser; if a call hangs, the window is waiting for login.
 - Session is repo-root `medium-session.json` (git-ignored).
-- Prefer `medium_edit.py` (same draft URL) over re-publishing when fixing drafts.
+- Prefer `medium_edit.py posts/NN-slug` (same URL) over re-publishing when fixing posts.
+- The draft titled "aiblog scratch ..." is the tools' scratch space (cover and
+  topic search); keep it, never publish it.
 - `*.built.md` is generated; rebuild with `uv run python tools/build_post.py posts/NN-slug`.
 
 Note: this file is git-ignored on purpose — resume state (draft URLs, local

@@ -1,85 +1,85 @@
-"""Edit an existing Medium draft in place (same URL preserved).
+"""Revise an existing Medium story in place (same URL, no duplicate).
 
 Usage:
-  uv run python tools/medium_edit.py <draft-id-or-url> posts/NN-slug
+  uv run python tools/medium_edit.py posts/NN-slug [--id <id-or-url>] [--republish]
 
-Rewrites the draft's title and body from post.built.md (rebuild first:
-uv run python tools/build_post.py posts/NN-slug). The repo is the source of
-truth: the editor is cleared, then refilled exactly like a fresh publish,
-so the draft ends up identical to what a new publish would produce, minus
-a duplicate draft. Old images are removed with their blocks.
+The repo is the source of truth: the story's editor is cleared and refilled
+from post.built.md exactly like a fresh publish (title, body, local images,
+Unsplash cover under the title). Rebuild first: tools/build_post.py.
+
+The story id comes from posts/NN-slug/medium.json; pass --id to attach a
+post to a story it doesn't know yet (it is then recorded).
+
+Drafts: the change is autosaved; the draft stays a draft.
+Published stories: refused unless --republish is given, because the change
+goes live immediately ("Save and publish"). Revising a live post is the
+author's call, like going live.
 """
 
-import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import medium_common as mc
-
-
-def draft_id(arg: str) -> str:
-    m = re.search(r"/p/([0-9a-f]+)", arg)
-    return m.group(1) if m else arg
+import postlib
 
 
 def main() -> int:
-    if len(sys.argv) != 3 or "--help" in sys.argv:
+    args = sys.argv[1:]
+    if not args or "--help" in args or "-h" in args:
         print(__doc__.strip())
-        return 0 if "--help" in sys.argv else 1
-    did = draft_id(sys.argv[1])
-    post_dir = Path(sys.argv[2])
-    built = post_dir / "post.built.md"
-    if not built.exists():
-        print(f"{built} missing - run tools/build_post.py first", file=sys.stderr)
+        return 0
+    sid = None
+    if "--id" in args:
+        i = args.index("--id")
+        sid = postlib.story_id(args[i + 1])
+        del args[i:i + 2]
+    republish = "--republish" in args
+    args = [a for a in args if a != "--republish"]
+    if len(args) != 1 or args[0].startswith("--"):
+        print(__doc__.strip(), file=sys.stderr)
+        return 2
+    post_dir = Path(args[0])
+    post = postlib.load_post(post_dir)
+    sid = sid or post["state"].get("id")
+    if not sid:
+        print(f"{post_dir} has no Medium story (medium.json). Publish it, or pass --id.",
+              file=sys.stderr)
         return 1
-    lines = built.read_text().splitlines()
-    title = lines[0].lstrip("# ").strip()
-    content = "\n".join(lines[1:]).strip()
-    url = f"https://medium.com/p/{did}/edit"
 
-    from playwright.sync_api import sync_playwright
-
-    with sync_playwright() as pw:
-        browser, context, page = mc.launch(pw)
-        try:
-            if not mc.ensure_logged_in(page, context):
-                return 1
-            page.goto(url)
-            mc.wait_for_editor(page)
-
-            # Clear the whole editor (title + body + old images), then refill.
-            cleared = page.evaluate(
-                """() => {
-                    const editor = document.querySelector(
-                        '.postArticle-content[contenteditable="true"]');
-                    if (!editor) return false;
-                    editor.focus();
-                    const range = document.createRange();
-                    range.selectNodeContents(editor);
-                    const sel = window.getSelection();
-                    sel.removeAllRanges();
-                    sel.addRange(range);
-                    return true;
-                }"""
+    with mc.medium_session() as page:
+        mc.open_story(page, sid)
+        published = mc.is_published(page)
+        if published and not republish:
+            print(f"{sid} is published: edits go live on save. Re-run with --republish "
+                  "once the author has approved the change.", file=sys.stderr)
+            return 1
+        live_cover = mc.first_image_unsplash_id(page)
+        if live_cover and live_cover != post["meta"].get("cover_id"):
+            print(
+                f"The story's first image is Unsplash photo {live_cover}, but post.md has "
+                f"cover_id={post['meta'].get('cover_id')}. The story was probably changed "
+                "in Medium after the repo copy was made; refilling would drop that.\n"
+                f"  Compare: uv run python tools/medium_pull.py {sid} --into /tmp/{sid}\n"
+                f"  Then bring post.md up to date and set the cover "
+                f"(tools/medium_cover.py {post_dir} search/pick).",
+                file=sys.stderr,
             )
-            if not cleared:
-                print("Editor not found on draft page.", file=sys.stderr)
-                return 1
-            page.keyboard.press("Backspace")
-            page.wait_for_timeout(500)
-
-            mc.type_title(page, title)
-            mc.fill_body_and_images(page, content)
-
-            # Same draft URL: no navigation happens, so wait for autosave.
-            page.wait_for_timeout(5000)
-            final_url = page.url
-            print(f"Draft updated: {final_url}")
-            print(final_url)
-            return 0
-        finally:
-            browser.close()
+            return 1
+        mc.clear_editor(page)
+        mc.fill_story(page, post)
+        mc.wait_for_autosave(page)
+        edit_url = f"https://medium.com/p/{sid}/edit"
+        if published:
+            url = mc.republish(page)
+            postlib.save_state(post_dir, id=sid, edit_url=edit_url, status="published",
+                               url=url, title=post["title"])
+            print(f"Published story updated: {url}")
+        else:
+            postlib.save_state(post_dir, id=sid, edit_url=edit_url, status="draft",
+                               title=post["title"])
+            print(f"Draft updated: {edit_url}")
+    return 0
 
 
 if __name__ == "__main__":

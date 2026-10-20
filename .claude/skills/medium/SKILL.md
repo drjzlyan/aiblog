@@ -16,7 +16,8 @@ skill is the trigger and the quality bar, not a second procedure.
 ## When to use
 
 - "write a post on X", "publish a blog", "next post in <series>"
-- "edit / update / fix the draft", "revise the post"
+- "edit / update / fix the draft", "revise the post", "revise my old post"
+- "publish it live", "list my drafts", "publish that older draft"
 - "ideate / brainstorm a post" (then grill first, draft second)
 
 Hand ambiguous *decisions* to the **grilling** skill (audience, angle, scope,
@@ -35,11 +36,19 @@ series vs standalone) before drafting. Never guess at those.
 4. **Verify.** Every code file is run (`tools/run_example.py`), every output
    screenshotted (`tools/render_output.py`, PNGs viewed), every number in the
    prose checked against real output. Then `tools/build_post.py`.
-5. **Publish.** Draft by default: `tools/medium_publish.py posts/NN-slug`.
-   Live only when the user says so for that post (`--live --tags ...`).
-6. **Edit.** Local change first, re-run + re-render if code changed, rebuild,
-   then `tools/medium_edit.py <draft-id> posts/NN-slug` (same URL, no duplicate).
-7. **Record.** Update roadmap/index + `STATE.md`. Report: draft URL, local path,
+5. **Package.** Decide `subtitle` and up to 5 `tags` in the post.md
+   frontmatter (research with `tools/medium_topics.py`). Choose the cover:
+   `tools/medium_cover.py posts/NN-slug search "<query>"`, VIEW the contact
+   sheet, `pick <N>`. Rebuild.
+6. **Publish.** Draft by default: `tools/medium_publish.py posts/NN-slug`.
+   Live only when the user says so for that post:
+   `tools/medium_golive.py posts/NN-slug --dry-run`, view
+   `publish_dialog.png`, then run it without `--dry-run`.
+7. **Edit.** Local change first, re-run + re-render if code changed, rebuild,
+   then `tools/medium_edit.py posts/NN-slug` (same URL, no duplicate;
+   published posts need `--republish` and the author's OK). Stories not in
+   the repo: `tools/medium_list.py` for ids, `tools/medium_pull.py <id>`.
+8. **Record.** Update roadmap/index + `STATE.md`. Report: draft URL, local path,
    what changed, and what still needs the author's eyes.
 
 ## Writing bar (distilled from the retired third-party Medium skill)

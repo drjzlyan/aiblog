@@ -1,8 +1,10 @@
 # aiblog — ideate, publish, and update Medium blogs from one repo
 
-A self-sufficient repo for writing Medium posts with a coding agent. No MCP
-servers, no third-party skills: just docs, roadmaps, and `tools/` automation.
-Clone it, start your agent in it, and ask it to write.
+A self-sufficient repo for writing Medium posts with any coding agent (Claude
+Code, Codex, Gemini CLI, Cursor: instructions live in `AGENTS.md`, which
+`CLAUDE.md` imports). No MCP servers, no API keys, no third-party skills: just docs,
+roadmaps, and `tools/` automation. Clone it, start your agent in it, and ask
+it to write.
 
 <video src="docs/demo.mp4" width="100%" controls></video>
 
@@ -22,10 +24,15 @@ Then start a coding agent in this folder and just ask:
   `roadmaps/rust-data.md` with phased topics; pick one.
 - *"Write the next post"* — it grills you on angle and audience, drafts the
   post, **runs every code example for real**, screenshots the actual output,
-  and hands you a Medium draft URL.
+  picks an **Unsplash cover** (the story thumbnail, credited), researches
+  **Medium topics** with real story counts, and hands you a Medium draft URL.
 - *"Update that draft — the intro is weak"* — it revises locally, re-verifies,
   and rewrites the **same draft in place**. No duplicates.
-- *"Publish it live with tags Python, Tutorial"* — only when you say so.
+- *"Publish it live"* — only when you say so. It dry-runs the publish dialog
+  (tags read back, thumbnail checked), shows you, then publishes.
+- *"List my drafts"*, *"publish that old draft"*, *"import my old post on X
+  and tighten it"* — older stories are listed by id, published live, or
+  pulled into the repo and revised in place.
 
 First Medium run opens a browser window: log in once, done.
 
@@ -37,7 +44,11 @@ First Medium run opens a browser window: log in once, done.
   from real output (`render_output.py`), posts assemble from tested files
   (`build_post.py`). Unrun code is never published.
 - **Draft-first.** Publishing creates drafts; going live needs your explicit
-  say-so per post. Edits land on the same draft URL (`medium_edit.py`).
+  say-so per post (`medium_golive.py`). Edits land on the same URL
+  (`medium_edit.py`); revising a live post needs `--republish`.
+- **Each post knows its story.** `posts/NN-slug/medium.json` records the
+  Medium id, status, and URL, so no command ever needs a pasted draft id and
+  duplicates are refused.
 - **Two built-in skills** (`.claude/skills/`): `grilling` (nails the idea
   before drafting) and `medium` (owns a post end to end, with a writing bar).
 - **Your own setup welcome.** Copy `CUSTOM.example.md` → `CUSTOM.md`
@@ -57,8 +68,8 @@ First Medium run opens a browser window: log in once, done.
 
 `posts/NN-slug/{post.md,code/,images/}` · `roadmaps/<series>.md` ·
 `ROADMAP.md` (index) · `STATE.md` (resume state) · `docs/WORKFLOW.md`
-(full workflow) · `tools/` (scaffold, run, render, build, publish, edit, list,
-demo builder) · `.claude/skills/{grilling,medium}`
+(full workflow) · `tools/` (scaffold, run, render, build, topics, cover,
+publish, go live, edit, list, pull, demo builder) · `.claude/skills/{grilling,medium}`
 
 ## Requirements
 
